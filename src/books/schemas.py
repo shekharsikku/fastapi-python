@@ -8,7 +8,7 @@ from src.reviews.schemas import ReviewModel
 from src.tags.schemas import TagModel
 
 
-class Book(BaseModel):
+class BookModel(BaseModel):
     id: uuid.UUID
     title: str
     author: str
@@ -20,7 +20,7 @@ class Book(BaseModel):
     updated_at: datetime
 
 
-class BookDetailModel(Book):
+class BookDetailModel(BookModel):
     reviews: List[ReviewModel]
     tags:List[TagModel]
 

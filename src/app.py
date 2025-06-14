@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from typing import Optional
 from contextlib import asynccontextmanager
 
-from .errors import register_all_errors
-from .middleware import register_middleware
+from src.lib.errors import register_all_errors
+from src.lib.middlewares import register_middlewares
 
 from src.auth.routes import auth_router
 from src.books.routes import book_router
@@ -54,7 +54,7 @@ app = FastAPI(
 
 
 register_all_errors(app)
-register_middleware(app)
+register_middlewares(app)
 
 
 app.include_router(auth_router, prefix=f"{version_prefix}/auth", tags=["auth"])
@@ -65,5 +65,5 @@ app.include_router(tag_router, prefix=f"{version_prefix}/tags", tags=["tags"])
 
 @app.get("/")
 @app.get("/hello")
-def greet_name(name: Optional[str] = "User") -> dict:
+def say_hello(name: Optional[str] = "User") -> dict:
     return {"message": f"Hello, {name}!"}

@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:17
+    container_name: postgres-db
+    environment:
+      - POSTGRES_USER=sikkusharma
+      - POSTGRES_PASSWORD=sikkusharma
+      - POSTGRES_DB=sikku-pg
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - sikku-network
+    ports:
+      - "5432:5432"
+
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    networks:
+      - sikku-network
+
+networks:
+  sikku-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

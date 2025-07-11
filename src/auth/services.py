@@ -8,6 +8,12 @@ from .schemas import UserCreateModel
 
 class UserService:
     @staticmethod
+    async def get_user_by_id(id: int, session: AsyncSession):
+        statement = select(User).where(User.id == id)
+        result = await session.exec(statement)
+        return result.first()
+    
+    @staticmethod
     async def get_user_by_email(email: str, session: AsyncSession):
         statement = select(User).where(User.email == email)
         result = await session.exec(statement)

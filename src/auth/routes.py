@@ -3,9 +3,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.lib.utils import verify_password, encode_jwt_token, get_timestamp
 from src.lib.response import success_response, error_response
+from src.lib.dependencies import get_current_user
 from src.db.main import get_session
 
-from .schemas import UserCreateModel, UserLoginModel
+from .schemas import UserCreateModel, UserLoginModel, UserModel
 from .services import UserService
 
 
@@ -57,3 +58,8 @@ async def signin_user(login_data: UserLoginModel, session: AsyncSession = Depend
 
     return success_response(status.HTTP_200_OK, "Signin successfully!", res_data)
 
+
+@auth_router.get("/me")
+async def get_user_info(query_user=Depends(get_current_user)):
+    user_data = UserModel.model_validate(query_user, from_attributes=True).model_dump(mode="json")
+    return success_response(status.HTTP_200_OK, "User information!", user_data)

@@ -6,7 +6,7 @@ from src.lib.response import success_response, error_response
 from src.lib.dependencies import get_current_user
 from src.db.main import get_session
 
-from .schemas import UserSignupModel, UserLoginModel, UserModel
+from .schemas import UserSignupModel, UserSigninModel, UserModel
 from .services import UserService
 
 
@@ -27,7 +27,7 @@ async def signup_user(user_data: UserSignupModel, session: AsyncSession = Depend
 
 
 @auth_router.post("/sign-in")
-async def signin_user(login_data: UserLoginModel, session: AsyncSession = Depends(get_session)):
+async def signin_user(login_data: UserSigninModel, session: AsyncSession = Depends(get_session)):
     user_exists = (
         await user_service.get_user_by_email(login_data.email, session)
         if login_data.email

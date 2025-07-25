@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr, model_validator
+from datetime import datetime
 
 
 class UserSignupModel(BaseModel):
@@ -27,3 +28,17 @@ class UserSigninModel(BaseModel):
         if not self.email and not self.username:
             raise ValueError("Either email or username must be provided")
         return self
+
+
+class UserModel(BaseModel):
+    id: int
+    name: str | None
+    email: str
+    username: str | None
+    password: str = Field(exclude=True)
+    gender: str | None
+    image: str | None
+    bio: str | None
+    setup: bool
+    created_at: datetime
+    updated_at: datetime

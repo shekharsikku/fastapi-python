@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.lib.utils import verify_password, encode_jwt_token, get_timestamp
+from src.lib.utils import verify_password, encode_jwt_token
 from src.lib.response import success_response, error_response
 from src.lib.dependencies import get_current_user
 from src.db.main import get_session
 
-from .schemas import UserCreateModel, UserLoginModel, UserModel
+from .schemas import UserSignupModel, UserLoginModel, UserModel
 from .services import UserService
 
 
@@ -15,7 +15,7 @@ user_service = UserService()
 
 
 @auth_router.post("/sign-up", status_code=status.HTTP_201_CREATED)
-async def signup_user(user_data: UserCreateModel, session: AsyncSession = Depends(get_session)):
+async def signup_user(user_data: UserSignupModel, session: AsyncSession = Depends(get_session)):
     user_exists = await user_service.user_email_exists(user_data.email, session)
     
     if user_exists:

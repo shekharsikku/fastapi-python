@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional, Any
 
 
-class ApiResponse(BaseModel):
+class ResponseModel(BaseModel):
     success: bool
     message: str
     data: Optional[Any] = None
@@ -13,11 +13,15 @@ class ApiResponse(BaseModel):
         json_encoders = {type(None): lambda v: None}
 
 
-def success_response(status_code: int, message: str, data: Any = None):
-    content = ApiResponse(success=True, message=message, data=data).model_dump(exclude_none=True)
-    return JSONResponse(status_code=status_code, content=content)
+class SuccessResponse(JSONResponse):
+    def __init__(self, status: int, message: str, data: Any = None):
+        content = ResponseModel(success=True, message=message, data=data)
+        super().__init__(status_code=status, content=content.model_dump(exclude_none=True))
 
 
-def error_response(status_code: int, message: str, error: Any = None):
-    content = ApiResponse(success=False, message=message, error=error).model_dump(exclude_none=True)
-    return JSONResponse(status_code=status_code, content=content)
+class ErrorResponse(Exception):
+    def __init__(self, status: int, message: str, error: Any = None):
+        self.status = status
+        self.message = message
+        self.error = error
+        super().__init__(message)

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
@@ -23,4 +23,4 @@ def register_all_errors(app: FastAPI):
     @app.exception_handler(SQLAlchemyError)
     async def sqlalchemy_error_handler(request, exc: SQLAlchemyError):
         content = ResponseModel(success=False, message="Database error occurred!", error=str(exc))
-        return JSONResponse(status_code=500, content=content.model_dump(exclude_none=True))
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=content.model_dump(exclude_none=True))

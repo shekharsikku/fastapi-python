@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 from datetime import datetime, timezone
 
+from src.lib.response import SuccessResponse, ErrorResponse
 from src.lib.utils import verify_password, encode_jwt_token, get_timestamp
-from src.lib.response import success_response, error_response
 from src.lib.dependencies import get_current_user, refresh_token_bearer
 from src.db.main import get_session
 
@@ -20,11 +20,11 @@ async def signup_user(user_data: UserSignupModel, session: AsyncSession = Depend
     user_exists = await user_service.user_email_exists(user_data.email, session)
     
     if user_exists:
-        return error_response(status.HTTP_409_CONFLICT, "Email already exists!")
+        raise ErrorResponse(status=status.HTTP_409_CONFLICT, message="Email already exists!")
 
     await user_service.create_user(user_data, session)
 
-    return success_response(status.HTTP_201_CREATED, "Signup successfully!")
+    return SuccessResponse(status=status.HTTP_201_CREATED, message="Signup successfully!")
 
 
 @auth_router.post("/sign-in")
@@ -36,12 +36,12 @@ async def signin_user(login_data: UserSigninModel, session: AsyncSession = Depen
     )
 
     if not user_exists:
-        return error_response(status.HTTP_404_NOT_FOUND, "User not found!")
+        raise ErrorResponse(status=status.HTTP_404_NOT_FOUND, message="User not found!")
 
     password_valid = verify_password(login_data.password, user_exists.password)
 
     if not password_valid:
-        return error_response(status.HTTP_401_UNAUTHORIZED, "Invalid credentials!")
+        raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Invalid credentials!")
 
     access_token = encode_jwt_token(user_id=user_exists.id, token_type="access")
     res_data = {
@@ -52,23 +52,23 @@ async def signin_user(login_data: UserSigninModel, session: AsyncSession = Depen
     }
 
     if not user_exists.setup:
-        return success_response(status.HTTP_200_OK, "Please, complete your profile!", res_data)
+        return SuccessResponse(status=status.HTTP_200_OK, message="Please, complete your profile!", data=res_data)
     
-    refresh_token = encode_jwt_token(user_data=user_exists.id, token_type="refresh")
+    refresh_token = encode_jwt_token(user_id=user_exists.id, token_type="refresh")
     res_data["refresh_token"] = refresh_token
 
-    return success_response(status.HTTP_200_OK, "Signin successfully!", res_data)
+    return SuccessResponse(status=status.HTTP_200_OK, message="Signin successfully!", data=res_data)
 
 
 @auth_router.get("/me")
 async def get_user_info(query_user=Depends(get_current_user)):
     user_data = UserModel.model_validate(query_user, from_attributes=True).model_dump(mode="json")
-    return success_response(status.HTTP_200_OK, "User information!", user_data)
+    return SuccessResponse(status=status.HTTP_200_OK, message="User information!", data=user_data)
 
 
 @auth_router.get("/refresh-token")
-async def get_new_access_token(details: dict = Depends(refresh_token_bearer)):
-    if datetime.fromtimestamp(details["exp"], timezone.utc) > get_timestamp():
-        new_access_token = encode_jwt_token(user_id=details["uid"], token_type="access")
-        return success_response(status.HTTP_200_OK, "Refresh token successfully!", {"access_token": new_access_token})
-    return error_response(status.HTTP_401_UNAUTHORIZED, "Token is invalid or expired!")
+async def get_new_access_token(token_data: dict = Depends(refresh_token_bearer)):
+    if datetime.fromtimestamp(token_data["exp"], timezone.utc) > get_timestamp():
+        access_token = encode_jwt_token(user_id=token_data["uid"], token_type="access")
+        return SuccessResponse(status=status.HTTP_200_OK, message="Token refreshed successfully!", data=access_token)
+    raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Token is invalid or expired!")

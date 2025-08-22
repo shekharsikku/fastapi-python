@@ -3,7 +3,7 @@ from sqlmodel import select
 
 from src.lib.utils import generate_passwd_hash
 from src.db.models import User
-from .schemas import UserCreateModel
+from .schemas import UserSignupModel
 
 
 class UserService:
@@ -36,7 +36,7 @@ class UserService:
         return user is not None
 
     @staticmethod
-    async def create_user(user_data: UserCreateModel, session: AsyncSession):
+    async def create_user(user_data: UserSignupModel, session: AsyncSession):
         user_data_dict = user_data.model_dump()
         new_user = User(**user_data_dict)
         new_user.password = generate_passwd_hash(user_data_dict["password"])

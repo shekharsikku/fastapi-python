@@ -1,16 +1,26 @@
 import redis.asyncio as aioredis
+import json
 
 from src.config import Config
 
 
-redis_client = aioredis.from_url(Config.REDIS_URL);
+redis_client = aioredis.from_url(Config.REDIS_URL, decode_responses=True)
 
 
-async def token_to_blacklist(key: str, value: str) -> str:
-    result = await redis_client.set(name=f"jti:{key}", value=value, ex=3600)
-    return result
+async def redis_set_json(key: str, value: dict, expire = 3600):
+    data = json.dumps(value)
+    return await redis_client.set(key, data, ex=expire)
 
 
-async def token_in_blacklist(key: str) -> bool:
-    token = await redis_client.get(f"jti:{key}")
-    return token is not None
+async def redis_get_json(key: str) -> dict | None:
+    data = await redis_client.get(key)
+    return json.loads(data) if data else None
+
+
+async def redis_set_string(key: str, value: str, expire = 3600):
+    return await redis_client.set(key, value, ex=expire)
+
+
+async def redis_get_string(key: str) -> str | None:
+    data = await redis_client.get(key)
+    return data if data else None

@@ -1,6 +1,5 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.requests import Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import time
@@ -12,17 +11,20 @@ logger.disabled = True
 
 
 def register_middlewares(app: FastAPI):
-
+    # Custom logging middleware
     @app.middleware("http")
     async def custom_logging(request: Request, call_next):
         start_time = time.time()
-
         response = await call_next(request)
-        processing_time = time.time() - start_time
+        end_time = round(time.time() - start_time, 4)
+        
+        host = request.client.host
+        port = request.client.port
+        method = request.method
+        path = request.url.path
+        code = response.status_code
 
-        message = f"{request.client.host}:{request.client.port} - {request.method} - {request.url.path} - {response.status_code} completed after {processing_time}s"
-
-        print(message)
+        print(f"{host}:{port} - {method} - {path} - {code} completed after {end_time}sec")
         return response
 
     app.add_middleware(
@@ -35,5 +37,5 @@ def register_middlewares(app: FastAPI):
 
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=[".onrender.com", "localhost", "127.0.0.1" ,"0.0.0.0"],
+        allowed_hosts=[".vercel.app", ".onrender.com", "localhost", "127.0.0.1" ,"0.0.0.0"],
     )

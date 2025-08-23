@@ -7,6 +7,7 @@ from src.lib.utils import verify_password, encode_jwt_token, get_timestamp
 from src.lib.dependencies import get_current_user, refresh_token_bearer, access_token_bearer
 from src.db.redis import redis_client, redis_set_json, redis_set_string
 from src.db.main import get_session
+from src.config import Config
 
 from .schemas import UserSignupModel, UserSigninModel, UserModel
 from .services import UserService
@@ -47,22 +48,18 @@ async def signin_user(login_data: UserSigninModel, session: AsyncSession = Depen
     user_data = UserModel.model_validate(user_exists, from_attributes=True).model_dump(mode="json")
     user_data_result = await redis_set_json(f"user:{user_exists.id}", user_data)
 
-    if not user_data_result:
-        raise ErrorResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR, message="Unable to signin!")
-
     access_token = encode_jwt_token(user_id=user_exists.id, token_type="access")
-    res_data = {"user": user_data, "token": {"access": access_token}}
+    refresh_token = encode_jwt_token(user_id=user_exists.id, token_type="refresh")
+    refresh_token_result = await redis_set_string(f"refresh:{user_exists.id}", refresh_token, Config.REFRESH_EXPIRY)
+
+    if not user_data_result or not refresh_token_result:
+        raise ErrorResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR, message="Unable to signin!")
+    
+    res_data = {"user": user_data, "token": {"access": access_token, "refresh": refresh_token}}
 
     if not user_exists.setup:
+        del res_data["token"]["refresh"]
         return SuccessResponse(status=status.HTTP_200_OK, message="Please, update your profile!", data=res_data)
-    
-    refresh_token = encode_jwt_token(user_id=user_exists.id, token_type="refresh")
-    refresh_token_result = await redis_set_string(f"refresh:{user_exists.id}", refresh_token, 86400)
-
-    if not refresh_token_result:
-        raise ErrorResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR, message="Unable to signin!")
-
-    res_data["token"]["refresh"] = refresh_token
 
     return SuccessResponse(status=status.HTTP_200_OK, message="Signin successfully!", data=res_data)
 
@@ -85,9 +82,9 @@ async def get_new_access_token(token_data: dict = Depends(refresh_token_bearer),
 
         access_token = encode_jwt_token(user_id=current_user_id, token_type="access")
         refresh_token = encode_jwt_token(user_id=current_user_id, token_type="refresh")
-        refresh_token_result = await redis_set_string(f"refresh:{current_user_id}", refresh_token, 86400)
+        refresh_token_result = await redis_set_string(f"refresh:{current_user_id}", refresh_token, Config.REFRESH_EXPIRY)
 
-        if not refresh_token_result or not user_data_result:
+        if not user_data_result or not refresh_token_result:
             raise ErrorResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR, message="Unable to refresh!")
 
         res_data = {"user": user_data, "token": {"access": access_token, "refresh": refresh_token}}

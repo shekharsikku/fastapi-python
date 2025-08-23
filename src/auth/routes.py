@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 from src.lib.response import SuccessResponse, ErrorResponse
 from src.lib.utils import verify_password, encode_jwt_token, get_timestamp
-from src.lib.dependencies import get_current_user, refresh_token_bearer
-from src.db.redis import redis_set_json, redis_set_string
+from src.lib.dependencies import get_current_user, refresh_token_bearer, access_token_bearer
+from src.db.redis import redis_client, redis_set_json, redis_set_string
 from src.db.main import get_session
 
 from .schemas import UserSignupModel, UserSigninModel, UserModel
@@ -93,4 +93,14 @@ async def get_new_access_token(token_data: dict = Depends(refresh_token_bearer),
         res_data = {"user": user_data, "token": {"access": access_token, "refresh": refresh_token}}
         return SuccessResponse(status=status.HTTP_200_OK, message="New tokens issued successfully!", data=res_data)
     
-    raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Refresh token is expired!")
+    raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Refresh token has expired!")
+
+
+@auth_router.get("/sign-out")
+async def signout_user(token_data: dict = Depends(access_token_bearer)):
+    current_user_id = token_data["uid"]
+
+    await redis_client.delete(f"user:{current_user_id}")
+    await redis_client.delete(f"refresh:{current_user_id}")
+
+    return SuccessResponse(status=status.HTTP_200_OK, message="Signout successfully")

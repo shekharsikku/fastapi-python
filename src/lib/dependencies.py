@@ -27,19 +27,25 @@ class TokenBearer(HTTPBearer):
 
         if token_data is None:
             if self.auto_error:
-                raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Token is invalid or expired!")
+                raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Invalid or expired token!")
             return None
 
         if self.token_type and self.token_type != token_data["type"]:
             if self.auto_error:
-                raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message=f"Please, provide a valid {self.token_type} token!")
+                raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message=f"Invalid {self.token_type} token!")
             return None
         
+        if self.token_type == "access":
+            stored_token = await redis_get_string(f"refresh:{token_data["uid"]}")
+
+            if stored_token is None:
+                raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Invalid access token!")
+
         if self.token_type == "refresh":
             stored_token = await redis_get_string(f"refresh:{token_data["uid"]}")
 
             if stored_token is None or stored_token != auth_token:
-                raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Refresh token is invalid!")
+                raise ErrorResponse(status=status.HTTP_401_UNAUTHORIZED, message="Invalid refresh token!")
 
         return token_data
         

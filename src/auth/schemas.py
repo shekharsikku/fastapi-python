@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr, model_validator
 from datetime import datetime
+from enum import Enum
 
 
 class UserSignupModel(BaseModel):
@@ -42,3 +43,24 @@ class UserModel(BaseModel):
     setup: bool
     created_at: datetime
     updated_at: datetime
+
+
+
+class GenderEnum(str, Enum):
+    male = "Male"
+    female = "Female"
+    other = "Other"
+
+
+class UserUpdateModel(BaseModel):
+    name: str = Field(min_length=3, max_length=20)
+    username: str = Field(min_length=3, max_length=20, pattern=r"^[a-z0-9_-]{3,20}$")
+    gender: GenderEnum
+    bio: str | None = None
+
+    def model_dump_filtered(self, **kwargs):
+        data = self.model_dump(**kwargs)
+        if self.bio is None:
+            data.pop("bio", None)
+        return data
+    

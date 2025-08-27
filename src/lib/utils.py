@@ -124,3 +124,6 @@ def decode_url_safe_token(token: str):
         logging.error(str(e))
         return None        
     
+
+def has_empty_field(fields: dict) -> bool:
+    return any(value in ("", None) for value in fields.values())

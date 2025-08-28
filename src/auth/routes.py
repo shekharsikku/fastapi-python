@@ -3,13 +3,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from datetime import datetime, timezone
 
 from src.lib.response import SuccessResponse, ErrorResponse
-from src.lib.utils import verify_password, encode_jwt_token, get_timestamp
+from src.lib.utils import verify_password, encode_jwt_token, get_timestamp, has_empty_field
 from src.lib.dependencies import get_current_user, refresh_token_bearer, access_token_bearer
 from src.db.redis import redis_client, redis_set_json, redis_set_string
 from src.db.main import get_session
 from src.config import Config
 
-from .schemas import UserSignupModel, UserSigninModel, UserModel
+from .schemas import UserSignupModel, UserSigninModel, UserModel, UserUpdateModel
 from .services import UserService
 
 
@@ -72,7 +72,7 @@ async def get_user_info(user_data=Depends(get_current_user)):
 
 
 @auth_router.get("/refresh-token")
-async def get_new_access_token(token_data: dict = Depends(refresh_token_bearer), session: AsyncSession = Depends(get_session)):
+async def get_new_tokens(token_data: dict = Depends(refresh_token_bearer), session: AsyncSession = Depends(get_session)):
     if datetime.fromtimestamp(token_data["exp"], timezone.utc) > get_timestamp():
         current_user_id = token_data["uid"]
 
@@ -101,3 +101,25 @@ async def signout_user(token_data: dict = Depends(access_token_bearer)):
     await redis_client.delete(f"refresh:{current_user_id}")
 
     return SuccessResponse(status=status.HTTP_200_OK, message="Signout successfully")
+
+
+@auth_router.patch("/update-profile")
+async def update_user_profile(update_data: UserUpdateModel, current_user = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
+    user_data = update_data.model_dump_filtered()
+
+    if user_data["username"] != current_user["username"]:
+        user_exists = await user_service.user_username_exists(update_data.username, session)
+
+        if user_exists:
+            raise ErrorResponse(status=status.HTTP_409_CONFLICT, message="Username already exists!")
+
+    user_data["setup"] = not has_empty_field(user_data)
+
+    updated_user = await user_service.update_user(current_user["id"], user_data, session)
+    updated_data = UserModel.model_validate(updated_user, from_attributes=True).model_dump(mode="json")
+    user_data_result = await redis_set_json(f"user:{current_user["id"]}", updated_data)
+
+    if not user_data_result:
+        raise ErrorResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR, message="Unable to update!")
+    
+    return SuccessResponse(status=status.HTTP_200_OK, message="Profile updated successfully!", data=updated_data)

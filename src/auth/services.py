@@ -1,6 +1,8 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
+from fastapi import status
 
+from src.lib.response import ErrorResponse
 from src.lib.utils import generate_passwd_hash
 from src.db.models import User
 from .schemas import UserSignupModel
@@ -42,11 +44,20 @@ class UserService:
         new_user.password = generate_passwd_hash(user_data_dict["password"])
         session.add(new_user)
         await session.commit()
-        return new_user.id
+        return new_user
 
     @staticmethod
-    async def update_user(user: User, user_data: dict, session: AsyncSession):
+    async def update_user(user_id: int, user_data: dict, session: AsyncSession):
+        statement = select(User).where(User.id == user_id)
+        result = await session.exec(statement)
+        user = result.first()
+
+        if not user:
+            raise ErrorResponse(status=status.HTTP_404_NOT_FOUND, message="User not found!")
+
         for k, v in user_data.items():
             setattr(user, k, v)
+
         await session.commit()
+        await session.refresh(user)
         return user

@@ -64,3 +64,7 @@ class UserUpdateModel(BaseModel):
             data.pop("bio", None)
         return data
     
+
+class ChangePasswordModel(BaseModel):
+    old_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=6)

@@ -10,24 +10,20 @@ from src.config import Config
 async_engine = AsyncEngine(create_engine(url=Config.DATABASE_URL, echo=True))
 
 
-async def test_db():
-    async with async_engine.begin() as conn:
+async def test_db() -> None:
+    async with async_engine.begin() as connection:
         statement = text("SELECT 'hello';")
-
-        result = await conn.execute(statement)
-        
-        print("Connection result:", result.all())
+        result = await connection.execute(statement)
+        print("Connection Result:", result.all())
 
 
 async def init_db() -> None:
-    async with async_engine.begin() as conn:
-        from .models import Book
-
-        await conn.run_sync(SQLModel.metadata.create_all)
+    async with async_engine.begin() as connection:
+        from .models import User, Book
+        await connection.run_sync(SQLModel.metadata.create_all)
 
 
 async def get_session() -> Any:
-    Session = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
-
-    async with Session() as session:
+    current_session = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
+    async with current_session() as session:
         yield session

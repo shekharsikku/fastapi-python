@@ -1,10 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import date, datetime
 from typing import Optional, List
 
 
 class BookModel(BaseModel):
-    id: int
+    id: str
     title: str
     subtitle: Optional[str]
     description: Optional[str]
@@ -16,6 +16,10 @@ class BookModel(BaseModel):
     language: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("id", mode="before")
+    def cast_id_to_str(cls, v):
+        return str(v)
 
 
 class BookCreateModel(BaseModel):

@@ -1,42 +1,30 @@
-import uuid
-from datetime import date, datetime
-from typing import List
-
 from pydantic import BaseModel
-
-from src.reviews.schemas import ReviewModel
-from src.tags.schemas import TagModel
+from datetime import date, datetime
+from typing import Optional, List
 
 
 class BookModel(BaseModel):
-    id: uuid.UUID
+    id: int
     title: str
-    author: str
-    publisher: str
-    published_date: date
-    page_count: int
-    language: str
+    subtitle: Optional[str]
+    description: Optional[str]
+    thumbnail: Optional[str]
+    author: Optional[str]
+    publisher: Optional[str]
+    published: Optional[date]
+    pages: Optional[int]
+    language: Optional[str]
     created_at: datetime
     updated_at: datetime
 
 
-class BookDetailModel(BookModel):
-    reviews: List[ReviewModel]
-    tags:List[TagModel]
-
-
 class BookCreateModel(BaseModel):
     title: str
-    author: str
-    publisher: str
-    published_date: str
-    page_count: int
-    language: str
-
-
-class BookUpdateModel(BaseModel):
-    title: str
-    author: str
-    publisher: str
-    page_count: int
-    language: str
+    subtitle: Optional[str] = None
+    description: Optional[str] = None
+    thumbnail: Optional[str] = None
+    author: Optional[str] = None
+    publisher: Optional[str] = None
+    published: Optional[str]
+    pages: Optional[int] = None
+    language: Optional[str] = None

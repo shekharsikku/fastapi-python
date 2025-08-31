@@ -16,10 +16,10 @@ class User(SQLModel, table=True):
     name: Optional[str] = Field(sa_column=Column(pg.VARCHAR(100), nullable=True, default=None))
     email: str = Field(sa_column=Column(pg.VARCHAR(100), nullable=False, unique=True))
     username: Optional[str] = Field(sa_column=Column(pg.VARCHAR(50), nullable=True, unique=True, default=None))
-    password: str = Field(sa_column=Column(pg.VARCHAR(200), nullable=False), exclude=True)
+    password: str = Field(sa_column=Column(pg.TEXT, nullable=False), exclude=True)
 
     gender: str = Field(sa_column=Column(pg.ENUM("Male", "Female", "Other", name="gender"), nullable=False, default="Other"))
-    image: Optional[str] = Field(sa_column=Column(pg.VARCHAR(300), nullable=True, default=None))
+    image: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True, default=None))
     bio: Optional[str] = Field(sa_column=Column(pg.VARCHAR(200), nullable=True, default=None))
     setup: bool = Field(sa_column=Column(pg.BOOLEAN, nullable=False, default=False))
 
@@ -56,14 +56,15 @@ class Book(SQLModel, table=True):
     id: int = Field(sa_column=Column(pg.BIGINT, primary_key=True, index=True, nullable=False, default=generate_id))
 
     title: str = Field(sa_column=Column(pg.VARCHAR(100), nullable=False, default=None))
-    description: Optional[str] = Field(sa_column=Column(pg.VARCHAR(200), nullable=True, default=None))
-    cover_image: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True, default=None))
+    subtitle: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True, default=None))
+    description: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True, default=None))
+    thumbnail: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True, default=None))
 
     author: Optional[str] = Field(sa_column=Column(pg.VARCHAR(100), nullable=True, default=None))
     publisher: Optional[str] = Field(sa_column=Column(pg.VARCHAR(100), nullable=True, default=None))
-    published_date: Optional[date] = Field(sa_column=Column(pg.VARCHAR(50), nullable=True, default=None))
+    published: Optional[date] = Field(sa_column=Column(pg.DATE, nullable=True, default=None))
 
-    page_count: Optional[int] = Field(sa_column=Column(pg.BIGINT, nullable=True, default=None))
+    pages: Optional[int] = Field(sa_column=Column(pg.BIGINT, nullable=True, default=None))
     language: Optional[str] = Field(sa_column=Column(pg.VARCHAR(200), nullable=True, default=None))
 
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, nullable=False))

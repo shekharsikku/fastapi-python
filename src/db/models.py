@@ -27,6 +27,7 @@ class User(SQLModel, table=True):
     updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, onupdate=get_timestamp, nullable=False))
 
     books: List["Book"] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy": "selectin"})
+    reviews: List["Review"] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy": "selectin"})
 
     def __repr__(self):
         return f"<User: {self.id} ({self.username or self.email})>"    
@@ -71,7 +72,31 @@ class Book(SQLModel, table=True):
     updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, onupdate=get_timestamp, nullable=False))
 
     user_id: Optional[int] = Field(sa_column=Column(pg.BIGINT, ForeignKey("users.id"), nullable=True, default=None))
+    
+    reviews: List["Review"] = Relationship(back_populates="book", sa_relationship_kwargs={"lazy": "selectin"})
+    
     user: Optional[User] = Relationship(back_populates="books")
 
     def __repr__(self):
         return f"<Book: {self.id} ({self.title})>"
+
+
+class Review(SQLModel, table=True):
+    __tablename__ = "reviews"
+
+    id: int = Field(sa_column=Column(pg.BIGINT, primary_key=True, index=True, nullable=False, default=generate_id))
+
+    rating: int = Field(sa_column=Column(pg.INTEGER, nullable=False, default=0), lt=5)
+    review: str = Field(sa_column=Column(pg.TEXT, nullable=False, default=None))
+    
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, nullable=False))
+    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, onupdate=get_timestamp, nullable=False))
+   
+    user_id: Optional[int] = Field(sa_column=Column(pg.BIGINT, ForeignKey("users.id"), nullable=True, default=None))
+    book_id: Optional[int] = Field(sa_column=Column(pg.BIGINT, ForeignKey("books.id"), nullable=True, default=None))
+
+    user: Optional[User] = Relationship(back_populates="reviews")
+    book: Optional[Book] = Relationship(back_populates="reviews")
+
+    def __repr__(self):
+        return f"<Review for book {self.book_id} by user {self.user_id}>"

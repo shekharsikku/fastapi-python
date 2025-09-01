@@ -60,15 +60,15 @@ class Book(SQLModel, table=True):
     description: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True, default=None))
     thumbnail: Optional[str] = Field(sa_column=Column(pg.TEXT, nullable=True, default=None))
 
-    author: Optional[str] = Field(sa_column=Column(pg.VARCHAR(100), nullable=True, default=None))
+    author: str = Field(sa_column=Column(pg.VARCHAR(100), nullable=False, default=None))
     publisher: Optional[str] = Field(sa_column=Column(pg.VARCHAR(100), nullable=True, default=None))
-    published: Optional[date] = Field(sa_column=Column(pg.DATE, nullable=True, default=None))
+    published: date = Field(sa_column=Column(pg.DATE, nullable=False, default=None))
 
     pages: Optional[int] = Field(sa_column=Column(pg.BIGINT, nullable=True, default=None))
     language: Optional[str] = Field(sa_column=Column(pg.VARCHAR(200), nullable=True, default=None))
 
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, nullable=False))
-    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp(), onupdate=get_timestamp, nullable=False))
+    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, onupdate=get_timestamp, nullable=False))
 
     user_id: Optional[int] = Field(sa_column=Column(pg.BIGINT, ForeignKey("users.id"), nullable=True, default=None))
     user: Optional[User] = Relationship(back_populates="books")

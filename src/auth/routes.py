@@ -9,7 +9,7 @@ from src.db.redis import redis_client, redis_set_json, redis_set_string
 from src.db.main import get_session
 from src.config import Config
 
-from .schemas import UserSignupModel, UserSigninModel, UserModel, UserUpdateModel, ChangePasswordModel
+from .schemas import UserSignupModel, UserSigninModel, UserModel, UserUpdateModel, ChangePasswordModel, UserBooksReviewsModel
 from .services import UserService
 
 
@@ -64,11 +64,18 @@ async def signin_user(login_data: UserSigninModel, session: AsyncSession = Depen
     return SuccessResponse(status=status.HTTP_200_OK, message="Signin successfully!", data=res_data)
 
 
-@auth_router.get("/me")
+@auth_router.get("/user-info")
 async def get_user_info(user_data=Depends(get_current_user)):
     if user_data is not None:
         return SuccessResponse(status=status.HTTP_200_OK, message="User information!", data=user_data)
     raise ErrorResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR, message="Something went wrong!")
+
+
+@auth_router.get("/all-info")
+async def get_books_and_reviews(token_data: dict = Depends(access_token_bearer), session: AsyncSession = Depends(get_session)):
+    user_data = await user_service.get_user_books_reviews(token_data["uid"], session)
+    data = UserBooksReviewsModel.model_validate(user_data, from_attributes=True).model_dump(mode="json")
+    return SuccessResponse(status=status.HTTP_200_OK, message="User information fetched!", data=data)
 
 
 @auth_router.get("/refresh-token")

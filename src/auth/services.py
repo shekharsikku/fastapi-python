@@ -1,4 +1,5 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from fastapi import status
 
@@ -61,3 +62,12 @@ class UserService:
         await session.commit()
         await session.refresh(user)
         return user
+
+    @staticmethod
+    async def get_user_books_reviews(user_id: int, session: AsyncSession):
+        statement = select(User).options(
+            selectinload(User.books), 
+            selectinload(User.reviews)
+        ).where(User.id == user_id)
+
+        return await session.scalar(statement)

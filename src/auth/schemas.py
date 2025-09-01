@@ -1,7 +1,10 @@
 from pydantic import BaseModel, Field, EmailStr, model_validator
 from datetime import datetime
+from typing import List
 from enum import Enum
 
+from src.books.schemas import BookModel
+from src.reviews.schemas import ReviewModel
 
 class UserSignupModel(BaseModel):
     name: str = Field(min_length=3, max_length=20)
@@ -44,6 +47,10 @@ class UserModel(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
+class UserBooksReviewsModel(UserModel):
+    books: List[BookModel]
+    reviews: List[ReviewModel]
 
 
 class GenderEnum(str, Enum):

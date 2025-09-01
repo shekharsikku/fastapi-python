@@ -3,7 +3,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from pydantic import TypeAdapter
 from typing import List
 
-from src.books.schemas import BookModel, BookCreateModel
+from src.books.schemas import BookModel, BookCreateModel, BookUpdateModel
 from src.books.services import BookService
 from src.db.main import get_session
 from src.lib.response import SuccessResponse, ErrorResponse
@@ -46,3 +46,24 @@ async def get_user_books(user_id: int, session: AsyncSession = Depends(get_sessi
     books_data = book_adapter.validate_python(all_books, from_attributes=True)
     books_data = book_adapter.dump_python(books_data, mode="json")
     return SuccessResponse(status=status.HTTP_200_OK, message="Books fetched successfully!", data=books_data)
+
+
+@book_router.patch("/{book_id}")
+async def update_book(book_id: int, book_update_data: BookUpdateModel, session: AsyncSession = Depends(get_session)):
+    updated_book = await book_service.update_book(book_id, book_update_data, session)
+
+    if updated_book:
+        book_data = BookModel.model_validate(updated_book, from_attributes=True).model_dump(mode="json")
+        return SuccessResponse(status=status.HTTP_200_OK, message="Book updated successfully!", data=book_data)
+    else:
+        raise ErrorResponse(status=status.HTTP_404_NOT_FOUND, message="Book not found!")
+    
+
+@book_router.delete("/{book_id}")
+async def delete_book(book_id: int, session: AsyncSession = Depends(get_session),):
+    book_to_delete = await book_service.delete_book(book_id, session)
+
+    if book_to_delete:
+        return SuccessResponse(status=status.HTTP_200_OK, message="Book deleted successfully!")
+    else:
+        raise ErrorResponse(status=status.HTTP_404_NOT_FOUND, message="Book not found!")

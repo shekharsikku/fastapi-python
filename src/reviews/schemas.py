@@ -1,16 +1,21 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional
 
 
 class ReviewModel(BaseModel):
-    id: int
+    id: str
     rating: int = Field(lt=5)
     review: str
-    user_id: Optional[int]
-    book_id: Optional[int]
+    user_id: Optional[str]
+    book_id: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("id", "user_id", "book_id", mode="before")
+    @classmethod
+    def cast_id_to_str(cls, v):
+        return str(v)
 
 
 class ReviewCreateModel(BaseModel):

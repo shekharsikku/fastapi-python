@@ -3,7 +3,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from datetime import datetime, timezone
 
 from src.lib.response import SuccessResponse, ErrorResponse
-from src.lib.utils import verify_password, encode_jwt_token, get_timestamp, has_empty_field, generate_passwd_hash
+from src.lib.utils import verify_password, encode_jwt_token, get_timestamp, generate_passwd_hash
 from src.lib.dependencies import get_current_user, refresh_token_bearer, access_token_bearer
 from src.db.redis import redis_client, redis_set_json, redis_set_string
 from src.db.main import get_session
@@ -25,7 +25,6 @@ async def signup_user(user_data: UserSignupModel, session: AsyncSession = Depend
         raise ErrorResponse(status=status.HTTP_409_CONFLICT, message="Email already exists!")
 
     await user_service.create_user(user_data, session)
-
     return SuccessResponse(status=status.HTTP_201_CREATED, message="Signup successfully!")
 
 
@@ -111,20 +110,12 @@ async def signout_user(token_data: dict = Depends(access_token_bearer)):
 
 
 @auth_router.patch("/update-profile")
-async def update_user_profile(update_data: UserUpdateModel, current_user=Depends(get_current_user), session: AsyncSession = Depends(get_session)):
-    user_data = update_data.model_dump_filtered()
+async def update_user_profile(update_data: UserUpdateModel, token_data=Depends(access_token_bearer), session: AsyncSession = Depends(get_session)):
+    user_id = token_data["uid"]
 
-    if user_data["username"] != current_user["username"]:
-        user_exists = await user_service.user_username_exists(update_data.username, session)
-
-        if user_exists:
-            raise ErrorResponse(status=status.HTTP_409_CONFLICT, message="Username already exists!")
-
-    user_data["setup"] = not has_empty_field(user_data)
-
-    updated_user = await user_service.update_user(current_user["id"], user_data, session)
+    updated_user = await user_service.update_user(user_id, update_data, session)
     updated_data = UserModel.model_validate(updated_user, from_attributes=True).model_dump(mode="json")
-    user_data_result = await redis_set_json(f"user:{current_user["id"]}", updated_data)
+    user_data_result = await redis_set_json(f"user:{user_id}", updated_data)
 
     if not user_data_result:
         raise ErrorResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR, message="Unable to update!")

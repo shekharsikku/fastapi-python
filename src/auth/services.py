@@ -4,9 +4,9 @@ from sqlmodel import select
 from fastapi import status
 
 from src.lib.response import ErrorResponse
-from src.lib.utils import generate_passwd_hash
+from src.lib.utils import generate_passwd_hash, has_empty_field
 from src.db.models import User
-from .schemas import UserSignupModel
+from .schemas import UserSignupModel, UserUpdateModel
 
 
 class UserService:
@@ -48,13 +48,22 @@ class UserService:
         return new_user
 
     @staticmethod
-    async def update_user(user_id: int, user_data: dict, session: AsyncSession):
+    async def update_user(user_id: int, update_data: UserUpdateModel, session: AsyncSession):
         statement = select(User).where(User.id == user_id)
         result = await session.exec(statement)
         user = result.first()
 
         if not user:
             raise ErrorResponse(status=status.HTTP_404_NOT_FOUND, message="User not found!")
+        
+        if update_data.username != user.username:
+            user_exists = await UserService.user_username_exists(update_data.username, session)
+
+            if user_exists:
+                raise ErrorResponse(status=status.HTTP_409_CONFLICT, message="Username already exists!")
+        
+        user_data = update_data.model_dump_filtered()
+        user_data["setup"] = not has_empty_field(user_data)
 
         for k, v in user_data.items():
             setattr(user, k, v)

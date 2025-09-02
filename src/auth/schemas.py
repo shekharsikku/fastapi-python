@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr, model_validator
+from pydantic import BaseModel, Field, EmailStr, model_validator, field_validator
 from datetime import datetime
 from typing import List
 from enum import Enum
@@ -6,9 +6,10 @@ from enum import Enum
 from src.books.schemas import BookModel
 from src.reviews.schemas import ReviewModel
 
+
 class UserSignupModel(BaseModel):
-    name: str = Field(min_length=3, max_length=20)
-    email: EmailStr = Field(max_length=40)
+    name: str = Field(min_length=3, max_length=50)
+    email: EmailStr = Field(max_length=100)
     password: str = Field(min_length=6)
 
     model_config = {
@@ -23,9 +24,9 @@ class UserSignupModel(BaseModel):
 
 
 class UserSigninModel(BaseModel):
-    email: str | None = Field(default=None, max_length=40)
-    username: str | None = Field(default=None, max_length=20)
-    password: str = Field(min_length=6)
+    email: str | None = None
+    username: str | None = None
+    password: str = Field(min_length=1)
 
     @model_validator(mode="after")
     def check_email_or_username(self) -> "UserSigninModel":
@@ -35,7 +36,7 @@ class UserSigninModel(BaseModel):
 
 
 class UserModel(BaseModel):
-    id: int
+    id: str
     name: str | None
     email: str
     username: str | None
@@ -46,6 +47,11 @@ class UserModel(BaseModel):
     setup: bool
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def cast_id_to_str(cls, v):
+        return str(v)
 
 
 class UserBooksReviewsModel(UserModel):
@@ -60,10 +66,10 @@ class GenderEnum(str, Enum):
 
 
 class UserUpdateModel(BaseModel):
-    name: str = Field(min_length=3, max_length=20)
-    username: str = Field(min_length=3, max_length=20, pattern=r"^[a-z0-9_-]{3,20}$")
+    name: str = Field(min_length=3, max_length=50)
+    username: str = Field(min_length=3, max_length=25, pattern=r"^[a-z0-9_-]{3,20}$")
     gender: GenderEnum
-    bio: str | None = None
+    bio: str | None = Field(max_length=200, default=None)
 
     def model_dump_filtered(self, **kwargs):
         data = self.model_dump(**kwargs)

@@ -34,8 +34,10 @@ class BookService:
         return result.all()
 
     @staticmethod
-    async def update_book(book_id: int, update_data: BookUpdateModel, session: AsyncSession):
-        book_to_update = await BookService.get_book(book_id, session)
+    async def update_book(book_id: int, user_id: int, update_data: BookUpdateModel, session: AsyncSession):
+        statement = select(Book).where(Book.id == book_id, Book.user_id == user_id)
+        result = await session.exec(statement)
+        book_to_update = result.first()
 
         if book_to_update is not None:
             update_data_dict = update_data.model_dump(exclude_unset=True)
@@ -50,8 +52,10 @@ class BookService:
             return None
 
     @staticmethod
-    async def delete_book(book_id: int, session: AsyncSession):
-        book_to_delete = await BookService.get_book(book_id, session)
+    async def delete_book(book_id: int, user_id: int, session: AsyncSession):
+        statement = select(Book).where(Book.id == book_id, Book.user_id == user_id)
+        result = await session.exec(statement)
+        book_to_delete = result.first()
 
         if book_to_delete is not None:
             await session.delete(book_to_delete)

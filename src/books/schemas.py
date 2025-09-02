@@ -2,6 +2,8 @@ from pydantic import BaseModel, field_validator
 from datetime import date, datetime
 from typing import Optional, List
 
+from src.reviews.schemas import ReviewModel
+
 
 class BookModel(BaseModel):
     id: str
@@ -23,26 +25,7 @@ class BookModel(BaseModel):
         return str(v)
 
 
-class BookCreateModel(BaseModel):
-    title: str
-    subtitle: Optional[str] = None
-    description: Optional[str] = None
-    thumbnail: Optional[str] = None
-    author: str
-    publisher: Optional[str] = None
-    published: date
-    pages: Optional[int] = None
-    language: Optional[str] = None
-
-    @field_validator("published", mode="before")
-    @classmethod
-    def parse_date(cls, v):
-        if isinstance(v, str):
-            return datetime.strptime(v, "%Y-%m-%d").date()
-        return v
-
-
-class BookUpdateModel(BaseModel):
+class BookBaseModel(BaseModel):
     title: Optional[str] = None
     subtitle: Optional[str] = None
     description: Optional[str] = None
@@ -59,3 +42,17 @@ class BookUpdateModel(BaseModel):
         if isinstance(v, str):
             return datetime.strptime(v, "%Y-%m-%d").date()
         return v
+
+
+class BookCreateModel(BookBaseModel):
+    title: str
+    author: str
+    published: date
+
+
+class BookUpdateModel(BookBaseModel):
+    pass
+
+
+class BookDetailModel(BookModel):
+    reviews: List[ReviewModel]

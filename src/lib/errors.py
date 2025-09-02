@@ -17,10 +17,11 @@ def register_all_errors(app: FastAPI):
 
     @app.exception_handler(HTTPException)
     async def http_error_handler(request, exc: HTTPException):
-        content = ResponseModel(success=False, message="Oops! Something went wrong!", error=exc.detail)
+        content = ResponseModel(success=False, message=f"{exc.detail}!")
         return JSONResponse(status_code=exc.status_code, content=content.model_dump(exclude_none=True))
 
     @app.exception_handler(SQLAlchemyError)
     async def sqlalchemy_error_handler(request, exc: SQLAlchemyError):
-        content = ResponseModel(success=False, message="Database error occurred!", error=str(exc))
+        print(f"Database Error: {str(exc)}")
+        content = ResponseModel(success=False, message="Database error occurred!")
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=content.model_dump(exclude_none=True))

@@ -86,7 +86,7 @@ class Review(SQLModel, table=True):
 
     id: int = Field(sa_column=Column(pg.BIGINT, primary_key=True, index=True, nullable=False, default=generate_id))
 
-    rating: int = Field(sa_column=Column(pg.INTEGER, nullable=False, default=0), lt=5)
+    rating: float = Field(sa_column=Column(pg.FLOAT, nullable=False, default=0), le=5)
     review: str = Field(sa_column=Column(pg.TEXT, nullable=False, default=None))
     
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=get_timestamp, nullable=False))

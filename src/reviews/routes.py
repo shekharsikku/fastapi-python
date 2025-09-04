@@ -1,12 +1,9 @@
 from fastapi import APIRouter, Depends, status
 from sqlmodel.ext.asyncio.session import AsyncSession
-from pydantic import TypeAdapter
-from typing import List
 
 from src.lib.response import ErrorResponse, SuccessResponse
 from src.lib.dependencies import access_token_bearer
 from src.db.main import get_session
-from src.db.models import User
 
 from src.books.schemas import BookDetailModel
 from src.books.services import BookService

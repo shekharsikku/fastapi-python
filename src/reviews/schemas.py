@@ -5,7 +5,7 @@ from typing import Optional
 
 class ReviewModel(BaseModel):
     id: str
-    rating: int = Field(lt=5)
+    rating: float = Field(le=5)
     review: str
     user_id: Optional[str]
     book_id: Optional[str]
@@ -19,5 +19,5 @@ class ReviewModel(BaseModel):
 
 
 class ReviewCreateModel(BaseModel):
-    rating: int = Field(lt=5)
+    rating: float = Field(le=5)
     review: str

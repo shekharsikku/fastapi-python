@@ -19,7 +19,7 @@ async def test_db() -> None:
 
 async def init_db() -> None:
     async with async_engine.begin() as connection:
-        from .models import User, Book
+        # from .models import User, Book, Review
         await connection.run_sync(SQLModel.metadata.create_all)
 
 

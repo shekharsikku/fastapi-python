@@ -23,7 +23,7 @@ async def life_span(app: FastAPI):
 
 
 version = "v1"
-version_prefix =f"/api/{version}"
+version_prefix = f"/api/{version}"
 
 description = """
 A REST API for a book review web service.
